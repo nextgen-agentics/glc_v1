@@ -121,7 +121,25 @@ async def test_synthesize_realtime_routes_to_gemini_live():
     assert r.provider == "gemini_live"
 
 
+def _can_use_system_tts() -> bool:
+    import platform
+    import shutil
+
+    if platform.system() == "Darwin" and shutil.which("say"):
+        return True
+    try:
+        import pyttsx3  # noqa: F401
+
+        return True
+    except Exception:
+        return False
+
+
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    not _can_use_system_tts(),
+    reason="system_fallback needs macOS `say` or pyttsx3 — Linux CI runner without pyttsx3 cannot exercise it",
+)
 async def test_synthesize_fallback_ships_working():
     """system_fallback is the one TTS provider that is implemented in
     the shipped scaffold — `prefer=fallback` must produce audio."""
